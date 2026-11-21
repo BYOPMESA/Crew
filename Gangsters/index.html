@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gangsters - Order Food</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1 id="restaurant-name">Gangsters</h1>
+    <p>Pick your favourites</p>
+  </header>
+
+  <main id="menu"></main>
+
+  <footer>Green dot = vegetarian &nbsp;&bull;&nbsp; Red dot = non-vegetarian</footer>
+
+  <!-- The menu lives in menu.js. This file only draws it. -->
+  <script src="menu.js"></script>
+  <script>
+    document.getElementById("restaurant-name").textContent = RESTAURANT_NAME;
+    document.title = RESTAURANT_NAME + " - Order Food";
+
+    var root = document.getElementById("menu");
+
+    function el(tag, className, text) {
+      var e = document.createElement(tag);
+      if (className) e.className = className;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+
+    MENU.forEach(function (group) {
+      var section = el("section", "group");
+      section.appendChild(el("h2", "", group.group));
+
+      var list = el("ul", "dishes");
+      group.dishes.forEach(function (dish) {
+        var li = el("li", "dish");
+
+        var nameRow = el("div", "name-row");
+        var dot = el("span", "dot " + (dish.veg ? "veg" : "nonveg"));
+        dot.appendChild(el("span", "sr-only", dish.veg ? "Veg" : "Non-veg"));
+        nameRow.appendChild(dot);
+
+        var info = el("div");
+        info.appendChild(el("div", "dish-name", dish.name));
+        if (dish.note) info.appendChild(el("div", "dish-note", dish.note));
+        nameRow.appendChild(info);
+        li.appendChild(nameRow);
+
+        var buyRow = el("div", "buy-row");
+        buyRow.appendChild(el("span", "price", "Rs " + dish.price));
+        var add = el("button", "add", "Add");
+        add.type = "button"; // does nothing yet
+        buyRow.appendChild(add);
+        li.appendChild(buyRow);
+
+        list.appendChild(li);
+      });
+
+      section.appendChild(list);
+      root.appendChild(section);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+/* Gangsters - page design. Change colours in :root below. */
+:root {
+  --cream: #fff6e8;
+  --card: #ffffff;
+  --brown: #4a2a18;
+  --brown-soft: #7a5a46;
+  --terracotta: #c8512b;
+  --terracotta-dark: #a63f1d;
+  --gold: #f2b84b;
+  --line: #f0dcc2;
+  --veg: #1f9d3a;
+  --nonveg: #d62d2d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--brown);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.top {
+  background: var(--terracotta);
+  color: #fff;
+  text-align: center;
+  padding: 36px 16px 30px;
+  border-bottom: 6px solid var(--gold);
+}
+.top h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.6rem;
+  letter-spacing: 2px;
+}
+.top p { margin: 6px 0 0; font-size: 1.05rem; opacity: 0.95; }
+
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+}
+
+.group { margin-top: 28px; }
+.group h2 {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.7rem;
+  color: var(--terracotta-dark);
+  padding-bottom: 6px;
+  border-bottom: 3px solid var(--gold);
+}
+
+.dishes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;   /* phone: one column */
+  gap: 12px;
+}
+
+.dish {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(74, 42, 24, 0.07);
+}
+
+.name-row { display: flex; align-items: flex-start; gap: 10px; }
+.dot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+.dot.veg { background: var(--veg); }
+.dot.nonveg { background: var(--nonveg); }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.dish-name { font-size: 1.2rem; font-weight: bold; }
+.dish-note { color: var(--brown-soft); font-size: 0.95rem; }
+
+.buy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.price { font-size: 1.3rem; font-weight: bold; }
+
+.add {
+  background: var(--terracotta);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  min-height: 52px;
+  min-width: 110px;
+  padding: 0 24px;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.add:hover { background: var(--terracotta-dark); }
+.add:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+footer { text-align: center; color: var(--brown-soft); padding: 0 16px 32px; font-size: 0.9rem; }
+
+/* Laptop: two columns of dishes, a bit more breathing room */
+@media (min-width: 760px) {
+  .top { padding: 52px 16px 44px; }
+  .top h1 { font-size: 3.6rem; }
+  .dishes { grid-template-columns: 1fr 1fr; gap: 16px; }
+}
