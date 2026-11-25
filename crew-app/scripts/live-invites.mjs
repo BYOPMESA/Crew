@@ -1,3 +1,6 @@
+// STATUS: BLOCKED / NOT VERIFIED - this script has never been run. It needs a server that has the
+// service-role key (check http://<host>/healthz reports "invites": true). See STATUS.md.
+//
 // Live two-user invite/join check against a RUNNING server and the REAL Supabase project.
 // Needs SUPABASE_SERVICE_ROLE_KEY in the server's .env and two pre-created users in .env.test.
 // Creates ONE trip owned by user A and prints its id for cleanup. No emails are sent.
@@ -12,6 +15,18 @@ if (missing.length) {
 }
 const BASE = process.env.TEST_BASE_URL?.trim() || 'http://localhost:3003';
 const { TEST_EMAIL_A: emailA, TEST_PASSWORD_A: pwA, TEST_EMAIL_B: emailB, TEST_PASSWORD_B: pwB } = process.env;
+
+// Preflight: this test is meaningless against a server that has no service-role key.
+try {
+  const health = await (await fetch(`${BASE}/healthz`)).json();
+  if (!health.invites) {
+    console.error(`BLOCKED / NOT VERIFIED: ${BASE}/healthz reports "invites": ${health.invites}. That server has no service-role key.`);
+    process.exit(3);
+  }
+} catch (err) {
+  console.error(`BLOCKED / NOT VERIFIED: cannot reach ${BASE}/healthz (${err.message}).`);
+  process.exit(3);
+}
 
 const results = [];
 const check = (name, ok, detail = '') => {
