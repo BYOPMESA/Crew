@@ -19,17 +19,35 @@ describe('security headers and static', () => {
     assert.equal(res.headers.get('x-powered-by'), null);
   });
 
-  test('healthz reports invites:true when a key is configured, and never leaks the key itself', async () => {
+  test('healthz reports invites:true only when the database functions answer, and never leaks anything', async () => {
     const secret = 'sb_secret_THIS_MUST_NEVER_APPEAR_IN_ANY_RESPONSE_0123456789';
-    const keyed = await startServer(fakeGateway(), { serviceKey: secret });
+    const calls = [];
+    const ready = await startServer(
+      fakeGateway({ rpc: async (name, args, who) => (calls.push({ name, args, who }), { data: [{ state: 'invalid' }], error: null }) }),
+      { serviceKey: secret },
+    );
     try {
-      const res = await keyed.request('GET', '/healthz');
+      const res = await ready.request('GET', '/healthz');
       const raw = await res.text();
       assert.deepEqual(JSON.parse(raw), { ok: true, invites: true });
-      assert.ok(!raw.includes(secret) && !raw.includes('sb_secret'));
+      assert.ok(!raw.includes(secret));
       for (const [name, value] of res.headers) assert.ok(!value.includes(secret), `header ${name}`);
+      assert.deepEqual(calls, [{ name: 'invitation_preview', args: { p_token_hash: 'probe' }, who: 'anon' }], 'asks the database with the anonymous role and a malformed hash (reads nothing)');
+      await ready.request('GET', '/healthz');
+      assert.equal(calls.length, 1, 'the answer is cached so health checks stay cheap');
     } finally {
-      await keyed.close();
+      await ready.close();
+    }
+  });
+
+  test('healthz reports invites:false when the functions are missing or the database errors', async () => {
+    for (const rpc of [undefined, async () => ({ data: null, error: { code: '42883', message: 'does not exist' } }), async () => { throw new Error('network down'); }]) {
+      const s = await startServer(fakeGateway({ rpc }));
+      try {
+        assert.deepEqual(await (await s.request('GET', '/healthz')).json(), { ok: true, invites: false });
+      } finally {
+        await s.close();
+      }
     }
   });
 

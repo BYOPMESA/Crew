@@ -13,7 +13,10 @@ export const config = Object.freeze({
  * Fake Supabase gateway. Pass overrides for the auth calls a test cares about;
  * `db` is the object returned by forUser(jwt).
  */
-export function fakeGateway({ auth = {}, db = {}, admin = null } = {}) {
+export function fakeGateway({ auth = {}, db = {}, admin = null, rpc = null } = {}) {
+  // rpc(name, args, who) is a test script for the database functions; `who` is 'anon' or 'user' so a test can
+  // assert WHICH client the server used. Unstubbed, it behaves like a project where the functions do not exist.
+  const callRpc = (who) => async (name, args) => (rpc ? rpc(name, args, who) : { data: null, error: { code: 'PGRST202', message: 'function not found' } });
   return {
     anon: () => ({
       auth: {
@@ -23,8 +26,9 @@ export function fakeGateway({ auth = {}, db = {}, admin = null } = {}) {
         signUp: async () => ({ data: {}, error: { code: 'x' } }),
         ...auth,
       },
+      rpc: callRpc('anon'),
     }),
-    forUser: () => db,
+    forUser: () => ({ ...db, rpc: callRpc('user') }),
     admin: () => {
       if (!admin) throw new Error('admin not available in tests');
       return admin;

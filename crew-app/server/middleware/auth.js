@@ -23,15 +23,21 @@ export function clearSessionCookies(res, cfg) {
 
 /**
  * For public routes that behave slightly differently for a signed-in visitor (e.g. the invite landing).
- * Never rejects and never refreshes: it only sets req.user when the access cookie is currently valid.
+ * Never rejects and never refreshes. Always sets req.db: a client acting as the signed-in user when the access
+ * cookie is currently valid (so RLS and auth.uid() see them), otherwise an anonymous client.
  */
 export function optionalAuth(gateway) {
   return wrap(async (req, res, next) => {
     const token = parseCookies(req.headers.cookie)[ACCESS_COOKIE];
+    req.db = null;
     if (token) {
       const { data, error } = await gateway.anon().auth.getUser(token);
-      if (!error && data?.user) req.user = { id: data.user.id, email: data.user.email };
+      if (!error && data?.user) {
+        req.user = { id: data.user.id, email: data.user.email };
+        req.db = gateway.forUser(token);
+      }
     }
+    req.db ??= gateway.anon();
     next();
   });
 }

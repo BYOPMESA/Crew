@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
-import { errorHandler } from './lib/http.js';
+import { createInvitesProbe } from './lib/health.js';
+import { errorHandler, wrap } from './lib/http.js';
 import { requestLog, sameOriginWrites, securityHeaders } from './middleware/security.js';
 import { authRoutes, meRoute } from './routes/auth.js';
 import { publicInvitationRoutes, tripInvitationRoutes } from './routes/invitations.js';
@@ -18,9 +19,10 @@ export function createApp({ config, gateway }) {
   app.use(express.json({ limit: '50kb' }));
   app.use(sameOriginWrites);
 
-  // `invites` is only a yes/no: whether THIS process has a service-role key. It makes a misconfigured
-  // server obvious (a process started without the key reports invites:false) without revealing anything.
-  app.get('/healthz', (req, res) => res.json({ ok: true, invites: Boolean(config.serviceKey) }));
+  // `invites` is a plain yes/no: are the invitation database functions deployed and reachable? It reveals nothing
+  // else, and it makes a project with the migration missing obvious instead of failing only when someone clicks Invite.
+  const invitesReady = createInvitesProbe(gateway);
+  app.get('/healthz', wrap(async (req, res) => res.json({ ok: true, invites: await invitesReady() })));
 
   const deps = { gateway, config };
   app.use('/api/auth', authRoutes(deps));
