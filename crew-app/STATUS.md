@@ -4,17 +4,26 @@ Last updated: 25 Nov 2026. This file is the honest record of what has and has no
 
 ## Invitations: where things stand
 
-**Short answer: no real invite link has been used to join a trip on the hosted project yet.**
-The flow is blocked on one approval, not on a secret (details below).
+**A real invite link, created by one real account, HAS been used by a second real account to join the organiser's
+trip on the hosted project** (live test, 25 Nov 2026, 37/37 checks). No service-role key is involved anywhere.
 
 | Layer | How it is verified | Status |
 |---|---|---|
-| Invitation SQL functions: authorization, one-time use, expiry, atomicity, privacy of the public landing, budget privacy after joining | 33 tests against **real Postgres** (PGlite) running the project's **real migration files**, with real roles and RLS (`test/db`) | **PASSED** |
-| Whole flow over HTTP: create, open link logged-out, sign in, join the right trip, reuse refused, expiry, replace, cancel, existing member "Open trip", dead-link messages | 19 tests: real Express app, real SQL functions, real RLS (`test/db/flow.test.js`). `admin()` throws, so the flow provably never needs a service-role key | **PASSED** |
-| Server argument shapes, hashing, error mapping, rate limits, which client is used | scripted-database tests (`test/invitations.test.js`) | **PASSED** |
-| **Migration `20261125160000_invitation_functions.sql` applied to the hosted Supabase project** | n/a | **NOT APPLIED. Awaiting explicit approval of the SQL.** |
-| **Live two-account test on the hosted project** (`npm run test:live:invites`) | needs the migration applied | **BLOCKED / NOT VERIFIED** |
-| Invite screens in a real signed-in browser session | manual | **NOT VERIFIED** |
+| **Hosted project, two real accounts** (`npm run test:live:invites`, 37 checks): create, link returned once, public landing, replace (old link dead), garbage link, join with the new link, reuse by the same person, used link reports used, organiser opens own link, existing-member "Open trip" (and anonymous never gets it), cancel, member cannot edit/invite/replace, member sees names but never tokens or emails, budget privacy (a member must not see the organiser's number until two have shared; both then see only the average) | real server + real Supabase project | **PASSED 37/37** |
+| **Expiry on the hosted project** (one-off check, 8 checks): an expired link says so and reveals nothing about the trip, the invitee is refused (410) and stays locked out, the organiser sees it as expired, replaces it, and the person joins with the replacement. The expiry time of ONE test invitation was moved into the past by hand to simulate the passage of time | real server + real Supabase project | **PASSED 8/8** (one-off script, not kept in the repo) |
+| Dead-end pages in a real logged-out browser: live link landing (join + log-in links carry the invite through sign-up), revoked link, unknown link | built-in browser against the real project | **CHECKED** |
+| Invitation SQL: authorization, one-time use, expiry, atomicity, landing privacy, budget privacy | 33 tests on real Postgres (PGlite) running the real migration files, real roles and RLS (`test/db`) | **PASSED** |
+| Whole flow over HTTP against real Postgres, with the service-role client made to throw | 19 tests (`test/db/flow.test.js`) | **PASSED** |
+| Server argument shapes, hashing, error mapping, rate limits, which client is used | `test/invitations.test.js` | **PASSED** |
+| Migration `20261125092535_invitation_functions` on the hosted project | applied after the SQL was reviewed; applied SQL is byte-identical to the repo file (md5 `ebc7373d...`); privileges and advisors checked | **APPLIED** |
+
+**Not verified:**
+
+- A signed-in click-through in a real browser: sign up or log in as the invited person, then press **Join the trip**.
+  The same steps are verified over the API with real sessions, and the screen logic by jsdom tests.
+- "Used by a third person" on the hosted project (only two test accounts exist). The SQL and the HTTP flow cover it,
+  and the hosted landing reports `used`.
+- Email invites (not built; the invite page says so).
 
 ### What was actually wrong
 
@@ -33,9 +42,9 @@ used, and joining is now genuinely atomic (the invitation row is locked, so two 
 `/healthz` reports `"invites": true` only when the functions answer, so a project without the migration is obvious
 (and Invite explains it with a plain 503) instead of failing silently.
 
-### To finish: after the SQL is approved
+### To re-verify on any other project
 
-1. Apply `supabase/migrations/20261125160000_invitation_functions.sql` to the project.
+1. Apply the migrations in `supabase/migrations` (the invitation one needs the first two).
 2. `GET /healthz` should show `"invites": true`.
 3. `npm run test:live:invites` with two pre-created test users in `.env.test`.
 

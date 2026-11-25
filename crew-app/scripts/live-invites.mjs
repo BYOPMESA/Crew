@@ -1,6 +1,6 @@
-// STATUS: BLOCKED / NOT VERIFIED - this script has never been run against the hosted project.
-// It needs the invitation database migration applied to that project (check http://<host>/healthz reports
-// "invites": true). No service-role key is needed or used. See STATUS.md.
+// STATUS: passed 37/37 against the hosted project on 25 Nov 2026 (see STATUS.md).
+// It needs the invitation database migration applied to the project under test (the preflight below checks that
+// http://<host>/healthz reports "invites": true and otherwise prints BLOCKED). No service-role key is needed or used.
 //
 // Live two-account invite/join check against a RUNNING server and the REAL Supabase project.
 // Needs two pre-created users in .env.test. Creates ONE trip owned by user A and prints its id for cleanup.
@@ -77,6 +77,8 @@ check('A creates a trip', r.status === 201 && !!tripId, JSON.stringify(r));
 if (!tripId) process.exit(2);
 console.log(`TRIP_ID=${tripId}`);
 await A.call('PATCH', `/api/trips/${tripId}`, { destination: 'Goa', start_date: '2026-12-20', end_date: '2026-12-23', expected_size: 4 });
+r = await A.call('PUT', `/api/trips/${tripId}/preferences`, { interests: ['Beaches'], vibe: 'balanced', stay_styles: ['Hostel'], must_visit: null });
+check('A saves preferences', r.status === 200);
 r = await A.call('PUT', `/api/trips/${tripId}/budget`, { amount_rupees: 8000 });
 check('A saves a budget of 8000 rupees', r.status === 200);
 
