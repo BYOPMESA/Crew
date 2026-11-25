@@ -1,6 +1,6 @@
 import { api } from '../lib/api.js';
 import { h } from '../lib/dom.js';
-import { dateRange, firstName, initial } from '../lib/format.js';
+import { crewIdentity, dateRange, firstName, initial } from '../lib/format.js';
 import { icon, link, screen } from '../lib/ui.js';
 
 /** B04: "You're in". Shows who is in and who is still pending, then sends the invitee to set preferences. */
@@ -11,8 +11,9 @@ export async function welcomeScreen(me, { params }) {
 
   const row = (letter, tone, name, sub, badge) =>
     h('div', { class: 'crewrow' }, h('div', { class: `av ${tone}`, 'aria-hidden': 'true' }, letter), h('div', {}, h('b', {}, name), h('div', { class: 's' }, sub)), badge);
+  const who = crewIdentity(members);
   const memberRows = members.map((m) =>
-    row(initial(m.display_name), 't', m.display_name, m.user_id === me.id ? 'You' : m.role === 'organiser' ? 'Organiser' : 'Member', h('span', { class: 'badge yes' }, 'In')),
+    row(who.get(m.user_id).initials, 't', who.get(m.user_id).name, m.user_id === me.id ? 'You' : m.role === 'organiser' ? 'Organiser' : 'Member', h('span', { class: 'badge yes' }, 'In')),
   );
   const pendingRows = invites
     .filter((i) => i.state === 'valid')

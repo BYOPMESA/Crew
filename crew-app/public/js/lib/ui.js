@@ -10,7 +10,13 @@ const ICONS = {
   sparkle: `<svg width="12" height="12" viewBox="0 0 24 24" fill="#8A6400"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z"/></svg>`,
   check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`,
 };
-export const icon = (name) => svg(ICONS[name]);
+// Icons are decorative: the surrounding text or aria-label carries the meaning.
+export const icon = (name) => {
+  const el = svg(ICONS[name]);
+  el.setAttribute('aria-hidden', 'true');
+  el.setAttribute('focusable', 'false');
+  return el;
+};
 
 export const logo = () =>
   h(
@@ -22,7 +28,8 @@ export const logo = () =>
     h('span', { class: 'logo-word' }, 'crew.com'),
   );
 
-export const screen = (...children) => h('main', { class: 'screen' }, ...children);
+// id + tabindex make this the target of the "Skip to content" link.
+export const screen = (...children) => h('main', { class: 'screen', id: 'main', tabindex: '-1' }, ...children);
 
 export const link = (href, attrs, ...children) => h('a', { href, 'data-link': '', ...attrs }, ...children);
 

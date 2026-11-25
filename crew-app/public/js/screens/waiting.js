@@ -1,6 +1,6 @@
 import { api } from '../lib/api.js';
 import { h } from '../lib/dom.js';
-import { initial } from '../lib/format.js';
+import { crewIdentity } from '../lib/format.js';
 import { backLink, icon, link, screen } from '../lib/ui.js';
 
 const POLL_MS = 6000;
@@ -30,11 +30,12 @@ export async function waitingScreen(me, { params, pollMs = POLL_MS }) {
     headline.textContent = done === members.length && members.length > 1
       ? 'Everyone who has joined has finished their preferences.'
       : "We're waiting for the rest of the crew to finish their preferences.";
+    const who = crewIdentity(members);
     list.replaceChildren(
       ...members.map((m) =>
         h('div', { class: 'crewrow' },
-          h('div', { class: 'av t', 'aria-hidden': 'true' }, initial(m.display_name)),
-          h('div', {}, h('b', {}, m.display_name), h('div', { class: 's' }, m.user_id === me.id ? 'You' : m.role === 'organiser' ? 'Organiser' : 'Member')),
+          h('div', { class: 'av t', 'aria-hidden': 'true' }, who.get(m.user_id).initials),
+          h('div', {}, h('b', {}, who.get(m.user_id).name), h('div', { class: 's' }, m.user_id === me.id ? 'You' : m.role === 'organiser' ? 'Organiser' : 'Member')),
           h('span', { class: `badge ${state(m) === 'done' ? 'yes' : 'planning'}` }, label[state(m)]),
         ),
       ),

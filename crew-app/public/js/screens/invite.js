@@ -1,6 +1,6 @@
 import { api } from '../lib/api.js';
 import { h } from '../lib/dom.js';
-import { initial } from '../lib/format.js';
+import { crewIdentity, initial } from '../lib/format.js';
 import { navigate } from '../lib/router.js';
 import { backLink, busy, errorBox, icon, screen } from '../lib/ui.js';
 
@@ -59,10 +59,11 @@ export async function inviteScreen(me, { params }) {
   }
 
   function crewList() {
+    const who = crewIdentity(data.members);
     const joined = data.members.map((m) =>
       h('div', { class: 'crewrow' },
-        h('div', { class: 'av t', 'aria-hidden': 'true' }, initial(m.display_name)),
-        h('div', {}, h('b', {}, m.display_name), h('div', { class: 's' }, m.user_id === me.id ? 'You' : 'Member', m.role === 'organiser' ? ' · Organiser' : '')),
+        h('div', { class: 'av t', 'aria-hidden': 'true' }, who.get(m.user_id).initials),
+        h('div', {}, h('b', {}, who.get(m.user_id).name), h('div', { class: 's' }, m.user_id === me.id ? 'You' : 'Member', m.role === 'organiser' ? ' · Organiser' : '')),
         h('span', { class: 'badge joined' }, 'Joined'),
       ),
     );

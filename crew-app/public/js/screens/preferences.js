@@ -54,7 +54,7 @@ export async function preferencesScreen(me, { params }) {
   };
 
   const vibeButtons = VIBES.map((v) =>
-    h('button', { type: 'button', class: `vibe${state.vibe === v.value ? ' sel' : ''}`, 'aria-pressed': String(state.vibe === v.value), 'data-vibe': v.value }, h('b', {}, v.label), h('span', {}, v.hint)),
+    h('button', { type: 'button', class: `vibe${state.vibe === v.value ? ' sel' : ''}`, 'aria-pressed': String(state.vibe === v.value), 'aria-label': `${v.label}, ${v.hint}`, 'data-vibe': v.value }, h('b', {}, v.label), h('span', {}, v.hint)),
   );
   vibeButtons.forEach((b) =>
     b.addEventListener('click', () => {

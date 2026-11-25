@@ -1,6 +1,6 @@
 import { api } from '../lib/api.js';
 import { h } from '../lib/dom.js';
-import { STATUS_LABEL, dateRange, initial, inr, nights } from '../lib/format.js';
+import { STATUS_LABEL, crewIdentity, dateRange, inr, nights } from '../lib/format.js';
 import { backLink, bottomNav, busy, errorBox, icon, link, screen } from '../lib/ui.js';
 
 /** Trip home: real state only. Budget average is the sole crew-wide number, as the PRD decides. */
@@ -33,10 +33,11 @@ export async function tripScreen(me, { params }) {
     }
   });
 
+  const who = crewIdentity(members);
   const crewRow = (m) =>
     h('div', { class: 'crewrow' },
-      h('div', { class: 'av t', 'aria-hidden': 'true' }, initial(m.display_name)),
-      h('div', {}, h('b', {}, m.display_name), h('div', { class: `s${m.has_preferences ? ' done' : ''}` }, m.role === 'organiser' ? 'Organiser' : 'Member', ' · ', m.has_preferences ? 'Preferences saved' : 'Preferences not saved yet')),
+      h('div', { class: 'av t', 'aria-hidden': 'true' }, who.get(m.user_id).initials),
+      h('div', {}, h('b', {}, who.get(m.user_id).name), h('div', { class: `s${m.has_preferences ? ' done' : ''}` }, m.role === 'organiser' ? 'Organiser' : 'Member', ' · ', m.has_preferences ? 'Preferences saved' : 'Preferences not saved yet')),
       h('span', { class: `badge ${m.has_preferences && m.has_budget ? 'yes' : 'planning'}` }, m.has_preferences && m.has_budget ? 'Done' : 'Waiting'),
     );
 
