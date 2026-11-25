@@ -12,11 +12,25 @@ describe('security headers and static', () => {
   test('health check has no secrets and sets security headers', async () => {
     const res = await srv.request('GET', '/healthz');
     assert.equal(res.status, 200);
-    assert.deepEqual(await res.json(), { ok: true });
+    assert.deepEqual(await res.json(), { ok: true, invites: false }, 'a server without a service key says so');
     assert.match(res.headers.get('content-security-policy'), /default-src 'self'/);
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.equal(res.headers.get('x-powered-by'), null);
+  });
+
+  test('healthz reports invites:true when a key is configured, and never leaks the key itself', async () => {
+    const secret = 'sb_secret_THIS_MUST_NEVER_APPEAR_IN_ANY_RESPONSE_0123456789';
+    const keyed = await startServer(fakeGateway(), { serviceKey: secret });
+    try {
+      const res = await keyed.request('GET', '/healthz');
+      const raw = await res.text();
+      assert.deepEqual(JSON.parse(raw), { ok: true, invites: true });
+      assert.ok(!raw.includes(secret) && !raw.includes('sb_secret'));
+      for (const [name, value] of res.headers) assert.ok(!value.includes(secret), `header ${name}`);
+    } finally {
+      await keyed.close();
+    }
   });
 
   test('code revalidates on every load; fonts and photos are cacheable', async () => {

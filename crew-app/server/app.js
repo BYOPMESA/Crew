@@ -18,7 +18,9 @@ export function createApp({ config, gateway }) {
   app.use(express.json({ limit: '50kb' }));
   app.use(sameOriginWrites);
 
-  app.get('/healthz', (req, res) => res.json({ ok: true }));
+  // `invites` is only a yes/no: whether THIS process has a service-role key. It makes a misconfigured
+  // server obvious (a process started without the key reports invites:false) without revealing anything.
+  app.get('/healthz', (req, res) => res.json({ ok: true, invites: Boolean(config.serviceKey) }));
 
   const deps = { gateway, config };
   app.use('/api/auth', authRoutes(deps));

@@ -32,8 +32,8 @@ export function fakeGateway({ auth = {}, db = {}, admin = null } = {}) {
   };
 }
 
-export async function startServer(gateway) {
-  const app = createApp({ config, gateway });
+export async function startServer(gateway, configOverrides = {}) {
+  const app = createApp({ config: { ...config, ...configOverrides }, gateway });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

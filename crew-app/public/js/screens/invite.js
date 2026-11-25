@@ -117,13 +117,17 @@ export async function inviteScreen(me, { params }) {
       h('div', { class: 'field' }, name),
       create,
     );
+    // replaceChildren() turns null/false into the TEXT "null"/"false" (unlike h(), which skips them),
+    // so optional pieces must be filtered out before they get here.
     view.replaceChildren(
-      form,
-      err.node,
-      shown && linkCard(),
-      h('div', { class: 'sec' }, h('span', { class: 'eyebrow' }, 'Crew'), crewList()),
-      h('div', { class: 'ai-note' }, icon('sparkle'), 'Friends set their own preferences and a personal budget after joining. Only the average budget is shared.'),
-      h('div', { class: 'ai-note' }, icon('sparkle'), "Email invites aren't set up yet. Copy the link and send it to your friend yourself."),
+      ...[
+        form,
+        err.node,
+        shown && linkCard(),
+        h('div', { class: 'sec' }, h('span', { class: 'eyebrow' }, 'Crew'), crewList()),
+        h('div', { class: 'ai-note' }, icon('sparkle'), 'Friends set their own preferences and a personal budget after joining. Only the average budget is shared.'),
+        h('div', { class: 'ai-note' }, icon('sparkle'), "Email invites aren't set up yet. Copy the link and send it to your friend yourself."),
+      ].filter(Boolean),
     );
   }
   paint();

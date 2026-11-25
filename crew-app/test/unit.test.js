@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loadConfig } from '../server/config.js';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { loadConfig, loadEnvFile } from '../server/config.js';
 import { parseCookies } from '../server/lib/cookies.js';
 import { minorToRupees, rupeesToMinor, splitEqual } from '../server/lib/money.js';
 import { createLimiter } from '../server/lib/ratelimit.js';
@@ -59,6 +62,26 @@ test('config: valid, defaults, and clear errors', () => {
     /COOKIE_SECURE=1 requires/,
   );
   assert.equal(loadConfig({ ...validEnv, SUPABASE_SERVICE_ROLE_KEY: ' s ' }).serviceKey, 's');
+});
+
+test('env: a variable already set in the environment is NOT overridden by an empty .env line', () => {
+  // This is how a key exported in a terminal reaches the server even though .env holds a blank placeholder.
+  const dir = mkdtempSync(path.join(tmpdir(), 'crew-env-'));
+  const file = path.join(dir, '.env');
+  const name = 'CREW_TEST_ONLY_KEY';
+  const before = process.env[name];
+  try {
+    writeFileSync(file, `${name}=\nCREW_TEST_ONLY_OTHER=from-file\n`);
+    process.env[name] = 'from-environment';
+    loadEnvFile(file);
+    assert.equal(process.env[name], 'from-environment', 'the real environment wins over an empty placeholder');
+    assert.equal(process.env.CREW_TEST_ONLY_OTHER, 'from-file', 'values not in the environment still load from the file');
+    assert.equal(loadConfig({ SUPABASE_URL: 'https://x.supabase.co', SUPABASE_ANON_KEY: 'k', SUPABASE_SERVICE_ROLE_KEY: '' }).serviceKey, null, 'an empty key means invites are disabled');
+  } finally {
+    if (before === undefined) delete process.env[name]; else process.env[name] = before;
+    delete process.env.CREW_TEST_ONLY_OTHER;
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('schema: trip basics validation', () => {

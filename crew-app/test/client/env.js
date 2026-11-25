@@ -39,9 +39,26 @@ export function resetDom(path = '/') {
   document.body.innerHTML = '<div id="app"></div>';
 }
 
-/** Attach a node to the page (so isConnected/closest work like in the app). */
+/**
+ * Fails if a screen shows leaked JavaScript values as text. Passing null/false/undefined to
+ * replaceChildren() or append() turns them into the literal text "null" / "false" / "undefined".
+ */
+export function assertClean(node, where = 'screen') {
+  // Inspect each text node on its own: adjacent text nodes concatenate ("...linknullCrew"), which hides
+  // a stray "null" from any whole-string regex.
+  const walker = document.createTreeWalker(node, window.NodeFilter.SHOW_TEXT);
+  for (let t = walker.nextNode(); t; t = walker.nextNode()) {
+    const value = t.nodeValue.trim();
+    if (/^(null|undefined|NaN|false|true)$/.test(value) || /\[object \w+\]|\bundefined\b|\bNaN\b/.test(value)) {
+      throw new Error(`stray "${value.slice(0, 40)}" text node on ${where} (inside <${t.parentElement?.tagName.toLowerCase()} class="${t.parentElement?.className}">)`);
+    }
+  }
+}
+
+/** Attach a node to the page (so isConnected/closest work like in the app). Every mounted screen is scanned for stray values. */
 export function mount(node) {
   document.getElementById('app').replaceChildren(node);
+  assertClean(node, 'mounted screen');
   return node;
 }
 

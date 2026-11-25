@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, describe, test } from 'node:test';
-import { mockApi, mount, resetDom, text, tick, window } from './env.js';
+import { assertClean, mockApi, mount, resetDom, text, tick, window } from './env.js';
 import { clearMe } from '../../public/js/lib/api.js';
 import { rememberPendingInvite } from '../../public/js/lib/pending.js';
 import { start } from '../../public/js/lib/router.js';
@@ -248,6 +248,7 @@ describe('invite the crew (A09)', () => {
     const linkInput = node.querySelector('.linkrow input');
     assert.equal(linkInput.value, `http://localhost:3003/join/${'N'.repeat(32)}`);
     assert.match(text(node), /Shown once/);
+    assertClean(node, 'invite page after creating a link');
     assert.ok([...node.querySelectorAll('.crewrow')].some((r) => /Tester.*Pending/.test(text(r))), 'new invite appears in the list');
     for (let i = 0; i < window.localStorage.length; i += 1) {
       assert.ok(!window.localStorage.getItem(window.localStorage.key(i)).includes('NNNN'), 'the link is never persisted');
@@ -271,9 +272,11 @@ describe('invite the crew (A09)', () => {
     await tick(40);
     assert.equal(node.querySelector('.linkrow input').value, `http://localhost:3003/join/${'R'.repeat(32)}`);
     assert.match(text(node.querySelector('.card[role="status"]')), /Link for Manas/);
+    assertClean(node, 'invite page after replacing a link');
 
     byText(node, 'button', /Cancel/).click();
     await tick(40);
+    assertClean(node, 'invite page after cancelling an invite (link card removed)');
     assert.ok(![...node.querySelectorAll('.crewrow')].some((r) => /Manas/.test(text(r))), 'cancelled invite disappears');
     assert.equal(node.querySelector('.card[role="status"]'), null, 'its link card is dropped too');
   });
@@ -286,6 +289,7 @@ describe('invite the crew (A09)', () => {
     await tick(40);
     assert.match(text(node.querySelector('.err')), /not set up on this server yet/);
     assert.equal(node.querySelector('.linkrow'), null);
+    assertClean(node, 'invite page after a failed create (invites not configured)');
   });
 
   test('a non-organiser is sent back to the trip instead of seeing organiser tools', async () => {
