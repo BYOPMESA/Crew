@@ -1,0 +1,79 @@
+/* Responsive + real-control layer on top of the mockup design system (style.css).
+   The mockup frames every screen at a fixed 390x844 with overflow hidden; here the same
+   screens become a centred, scrolling column that fills phones and sits in the middle on desktop. */
+
+html, body { width: auto; height: auto; min-height: 100%; overflow: visible; }
+#app { position: relative; z-index: 1; width: 100%; max-width: 430px; margin: 0 auto; }
+.screen {
+  width: 100%; height: auto; min-height: 100dvh;
+  padding-top: max(22px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.screen > .grow { flex: 1 1 auto; min-height: 16px; }
+/* the mockups draw a fake phone status bar and home indicator; a real device has its own */
+.statusbar, .home-ind { display: none; }
+
+/* accessibility */
+:focus-visible { outline: 2px solid var(--teal-deep); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1:focus, h2:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* real form controls styled as the mockup's .field */
+.field:focus-within { border-color: var(--teal); box-shadow: 0 0 0 4px rgba(0, 184, 169, .14); }
+.field input, .field textarea {
+  flex: 1; min-width: 0; width: 100%; border: 0; outline: 0; background: transparent;
+  font: inherit; color: inherit; height: 100%;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--dim); }
+.field.area { height: auto; align-items: flex-start; padding: 12px 14px; }
+.field.area textarea { resize: none; min-height: 64px; }
+.field.invalid { border-color: #B42318; }
+
+button.cta, button.cta2, button.chip, button.vibe, button.rnd, button.pill-btn { font-family: inherit; cursor: pointer; }
+button.chip { border: 0; }
+button.vibe { color: inherit; font-family: inherit; }
+button.rnd { border: 0; }
+.cta[disabled], .cta2[disabled] { opacity: .6; cursor: not-allowed; box-shadow: none; }
+a.cta, a.cta2 { text-decoration: none; }
+
+/* feedback */
+.err { background: #FEF3F2; color: #B42318; border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.4; }
+.note { background: var(--tint); color: var(--teal-deep); border-radius: 12px; padding: 10px 12px; font-size: 12px; line-height: 1.4; font-weight: 500; }
+.loading { padding: 80px 0; text-align: center; color: var(--mut); font-size: 12px; }
+
+/* real range input styled as the mockup slider */
+input[type="range"].range { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; margin: 8px 0 4px; cursor: pointer; }
+.range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(var(--teal), var(--teal)) 0 / var(--fill, 0%) 100% no-repeat, var(--surface2);
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; margin-top: -8px;
+  background: #fff; border: 6px solid var(--teal); box-shadow: 0 2px 6px rgba(0, 184, 169, .35);
+}
+.range::-moz-range-track { height: 6px; border-radius: 3px; background: var(--surface2); }
+.range::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--teal); }
+.range::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 6px solid var(--teal); box-shadow: 0 2px 6px rgba(0, 184, 169, .35); }
+.amount { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.amount .field { height: 42px; flex: 1; }
+
+/* stepper output */
+.stepper output { min-width: 28px; text-align: center; font-weight: 800; font-size: 18px; }
+
+/* trips + nav (bottom nav items are real links) */
+.tripcard { display: block; }
+.strip.plain { background: var(--grad); display: grid; place-items: center; color: rgba(255, 255, 255, .85); }
+.nav { margin-top: auto; position: sticky; bottom: max(8px, env(safe-area-inset-bottom)); }
+.nav a { text-decoration: none; }
+.stat-grid { display: flex; gap: 8px; }
+.stat-grid .m { flex: 1; background: #fff; border-radius: 14px; box-shadow: var(--sh-card); padding: 10px; text-align: center; }
+.stat-grid .m b { display: block; font-size: 15px; font-weight: 800; }
+.stat-grid .m span { font-size: 10px; color: var(--mut); }
+.hero.plain { background: var(--grad); }
+.hero.plain::after { background: linear-gradient(180deg, rgba(15, 46, 51, 0) 30%, rgba(15, 46, 51, .35)); }
+.crewrow .s.done { color: var(--green); font-weight: 600; }
+.linkrow { gap: 8px; }
+.linkrow input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 600; color: var(--ink); }
+.crewrow { flex-wrap: wrap; }
+.crewrow > div:nth-child(2) { flex: 1; min-width: 0; }
