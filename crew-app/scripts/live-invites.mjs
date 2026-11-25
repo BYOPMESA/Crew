@@ -1,9 +1,10 @@
-// STATUS: BLOCKED / NOT VERIFIED - this script has never been run. It needs a server that has the
-// service-role key (check http://<host>/healthz reports "invites": true). See STATUS.md.
+// STATUS: BLOCKED / NOT VERIFIED - this script has never been run against the hosted project.
+// It needs the invitation database migration applied to that project (check http://<host>/healthz reports
+// "invites": true). No service-role key is needed or used. See STATUS.md.
 //
-// Live two-user invite/join check against a RUNNING server and the REAL Supabase project.
-// Needs SUPABASE_SERVICE_ROLE_KEY in the server's .env and two pre-created users in .env.test.
-// Creates ONE trip owned by user A and prints its id for cleanup. No emails are sent.
+// Live two-account invite/join check against a RUNNING server and the REAL Supabase project.
+// Needs two pre-created users in .env.test. Creates ONE trip owned by user A and prints its id for cleanup.
+// No emails are sent.
 import { existsSync } from 'node:fs';
 
 if (existsSync('.env.test')) process.loadEnvFile('.env.test');
@@ -16,11 +17,11 @@ if (missing.length) {
 const BASE = process.env.TEST_BASE_URL?.trim() || 'http://localhost:3003';
 const { TEST_EMAIL_A: emailA, TEST_PASSWORD_A: pwA, TEST_EMAIL_B: emailB, TEST_PASSWORD_B: pwB } = process.env;
 
-// Preflight: this test is meaningless against a server that has no service-role key.
+// Preflight: this test is meaningless if the invitation database functions are not deployed.
 try {
   const health = await (await fetch(`${BASE}/healthz`)).json();
   if (!health.invites) {
-    console.error(`BLOCKED / NOT VERIFIED: ${BASE}/healthz reports "invites": ${health.invites}. That server has no service-role key.`);
+    console.error(`BLOCKED / NOT VERIFIED: ${BASE}/healthz reports "invites": ${health.invites}. The invitation database migration (supabase/migrations/*_invitation_functions.sql) has not been applied to this project, or the database is unreachable.`);
     process.exit(3);
   }
 } catch (err) {
@@ -82,7 +83,7 @@ check('A saves a budget of 8000 rupees', r.status === 200);
 // ---- create + replace
 r = await A.call('POST', `/api/trips/${tripId}/invitations`, { invitee_name: 'Tester B' });
 if (r.status === 503) {
-  console.error('\nInvites are not configured on the server (SUPABASE_SERVICE_ROLE_KEY missing). Set it in .env and restart.');
+  console.error('\nInvites are unavailable: the invitation database migration has not been applied to this project.');
   console.log(`Clean up afterwards: delete trip ${tripId}`);
   process.exit(3);
 }
@@ -122,6 +123,23 @@ r = await anon.call('GET', `/api/invitations/${tok2}`);
 check('the used link now reports used', r.data?.state === 'used', JSON.stringify(r));
 r = await A.call('POST', `/api/invitations/${tok2}/accept`);
 check('the organiser opening it gets "already a member"', r.status === 200 && r.data?.already_member === true, JSON.stringify(r));
+
+// ---- existing member sees "Open trip" (the used link cannot show it, so make a spare)
+r = await A.call('POST', `/api/trips/${tripId}/invitations`, { invitee_name: 'Spare' });
+const spareTok = tokenOf(r.data.link);
+const spareId = r.data.invitation.id;
+r = await B.call('GET', `/api/invitations/${spareTok}`);
+check('landing for an existing member says member:true with the trip id ("Open trip")', r.data?.member === true && r.data.trip_id === tripId, JSON.stringify(r));
+r = await anon.call('GET', `/api/invitations/${spareTok}`);
+check('anonymous visitors never get member or trip_id', r.data?.member === false && !('trip_id' in r.data), JSON.stringify(r));
+r = await B.call('POST', `/api/invitations/${spareTok}/accept`);
+check('an existing member opening a spare link gets already_member', r.status === 200 && r.data?.already_member === true, JSON.stringify(r));
+r = await anon.call('GET', `/api/invitations/${spareTok}`);
+check('the spare link was NOT consumed by that', r.data?.state === 'valid', JSON.stringify(r));
+r = await A.call('POST', `/api/trips/${tripId}/invitations/${spareId}/revoke`);
+check('the organiser can cancel it', r.status === 200, JSON.stringify(r));
+r = await anon.call('GET', `/api/invitations/${spareTok}`);
+check('a cancelled link is dead', r.data?.state === 'revoked', JSON.stringify(r));
 
 // ---- B as a member
 r = await B.call('GET', `/api/trips/${tripId}`);
