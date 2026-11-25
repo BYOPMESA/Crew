@@ -1,0 +1,22 @@
+{
+  "name": "crew-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "crew.com - group trip planning (Express API + vanilla JS client, Supabase Postgres/Auth)",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "test:live": "node scripts/live-flow.mjs",
+    "test:live:invites": "node scripts/live-invites.mjs"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
+    "express": "^4.22.3",
+    "zod": "^4.6.7"
+  }
+}

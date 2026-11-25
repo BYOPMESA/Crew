@@ -1,0 +1,15 @@
+node_modules/
+
+# Secrets: real env files are never committed; the *.example templates are.
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+*.log
+
+# Local tooling config
+.claude/
+
+# Throwaway copy of the mockup source used while porting screens (the originals live in /tripcrew)
+reference/
