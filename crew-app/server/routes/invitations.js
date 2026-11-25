@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { INVITE_MESSAGES, MAX_INVITES_PER_TRIP, TOKEN_RE, hashToken, inviteState, newToken } from '../lib/invites.js';
 import { parse, sendDbError, wrap } from '../lib/http.js';
 import { createLimiter } from '../lib/ratelimit.js';
-import { requireAuth } from '../middleware/auth.js';
+import { optionalAuth, requireAuth } from '../middleware/auth.js';
 import { uuidParam } from '../schemas.js';
 
 const createSchema = z.object({ invitee_name: z.string().trim().min(1, "Enter your friend's name").max(60) }).strict();
@@ -189,6 +189,7 @@ export function publicInvitationRoutes({ gateway, config }) {
 
   router.get(
     '/:token',
+    optionalAuth(gateway),
     wrap(async (req, res) => {
       if (!lookupLimit.hit(req.ip).ok) return res.status(429).json({ error: 'too_many_attempts' });
       const admin = adminOr503(gateway, res);
@@ -207,6 +208,20 @@ export function publicInvitationRoutes({ gateway, config }) {
         admin.from('trip_members').select('user_id', { count: 'exact', head: true }).eq('trip_id', invitation.trip_id),
       ]);
       for (const r of [trip, organiser, members]) if (r.error) return sendDbError(res, r.error);
+
+      // A signed-in visitor who is already in this trip gets an "Open trip" state instead of "Join".
+      let member = false;
+      if (req.user) {
+        const { data, error: memberError } = await admin
+          .from('trip_members')
+          .select('user_id')
+          .eq('trip_id', invitation.trip_id)
+          .eq('user_id', req.user.id)
+          .maybeSingle();
+        if (memberError) return sendDbError(res, memberError);
+        member = !!data;
+      }
+
       // Public landing shows only what the PRD allows: organiser, trip name, destination, dates, crew size.
       res.json({
         state: 'valid',
@@ -214,6 +229,8 @@ export function publicInvitationRoutes({ gateway, config }) {
         organiser: firstWord(organiser.data.display_name),
         trip: trip.data,
         crew_in: members.count ?? 0,
+        member,
+        ...(member && { trip_id: invitation.trip_id }),
       });
     }),
   );

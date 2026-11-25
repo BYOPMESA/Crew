@@ -185,8 +185,41 @@ describe('public landing (no login)', () => {
       organiser: 'Chris',
       trip: { name: 'Goa gang', destination: 'Goa', start_date: '2026-12-20', end_date: '2026-12-23' },
       crew_in: 1,
+      member: false,
     });
     assert.ok(!JSON.stringify(body).includes('secret@x.com'));
+  });
+
+  test('signed-in visitors: members get an "Open trip" state; non-members and bad cookies do not', async () => {
+    const inv = seeded();
+    const { gateway } = setup({ invitations: [inv.row] });
+    srv = await startServer(gateway);
+    const lookup = async (cookie) => (await srv.request('GET', `/api/invitations/${inv.token}`, { headers: cookie ? { cookie } : {} })).json();
+
+    const organiser = await lookup(AUTH_COOKIE); // USER is the organiser, so already a member
+    assert.equal(organiser.member, true);
+    assert.equal(organiser.trip_id, TRIP);
+
+    const stranger = await lookup(OTHER_COOKIE); // USER2 has not joined
+    assert.equal(stranger.member, false);
+    assert.ok(!('trip_id' in stranger), 'no trip id is revealed to non-members');
+
+    const anonymous = await lookup();
+    assert.equal(anonymous.member, false);
+    assert.ok(!('trip_id' in anonymous));
+
+    const forged = await lookup('crew_at=not-a-real-token');
+    assert.equal(forged.member, false, 'an invalid session never counts as a member');
+    assert.equal(forged.state, 'valid');
+  });
+
+  test('a member-flagged lookup does not consume the link or add anyone', async () => {
+    const inv = seeded();
+    const { db, gateway } = setup({ invitations: [inv.row] });
+    srv = await startServer(gateway);
+    await srv.request('GET', `/api/invitations/${inv.token}`, { headers: { cookie: AUTH_COOKIE } });
+    assert.equal(db.tables.invitations[0].status, 'pending');
+    assert.equal(db.tables.trip_members.length, 1);
   });
 
   test('used, revoked, expired and malformed links are clear dead-ends that reveal nothing', async () => {

@@ -22,6 +22,21 @@ export function clearSessionCookies(res, cfg) {
 }
 
 /**
+ * For public routes that behave slightly differently for a signed-in visitor (e.g. the invite landing).
+ * Never rejects and never refreshes: it only sets req.user when the access cookie is currently valid.
+ */
+export function optionalAuth(gateway) {
+  return wrap(async (req, res, next) => {
+    const token = parseCookies(req.headers.cookie)[ACCESS_COOKIE];
+    if (token) {
+      const { data, error } = await gateway.anon().auth.getUser(token);
+      if (!error && data?.user) req.user = { id: data.user.id, email: data.user.email };
+    }
+    next();
+  });
+}
+
+/**
  * Verifies the access token with Supabase Auth (not just decoding it), refreshing from the
  * refresh cookie when expired. Attaches req.user and req.db (a client acting as that user).
  */
