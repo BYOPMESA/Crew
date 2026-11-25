@@ -178,11 +178,11 @@ describe('trip page', () => {
     mockApi({ [`GET /api/trips/${ID}`]: detail({ members, crew_budget: { average_minor: null, submitted: 1, expected: 4 } }) });
     let node = mount(await tripScreen(ME, params));
     assert.match(text(node.querySelector('[data-testid="budget-note"]')), /appears once a second person shares/);
-    assert.ok(!/₹/.test(text(node.querySelector('.stat-grid'))), 'no figure is shown that could expose one person');
+    assert.ok(!/₹/.test(text(node.querySelector('.stats'))), 'no figure is shown that could expose one person');
 
     mockApi({ [`GET /api/trips/${ID}`]: detail({ members, crew_budget: { average_minor: 650000, submitted: 2, expected: 4 } }) });
     node = mount(await tripScreen(ME, params));
-    assert.match(text(node.querySelector('.stat-grid')), /₹6,500/);
+    assert.match(text(node.querySelector('.stats')), /₹6,500/);
     assert.equal(text(node.querySelector('[data-testid="budget-note"]')), '2 of 4 people have shared a budget');
   });
 

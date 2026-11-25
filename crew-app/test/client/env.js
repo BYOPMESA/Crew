@@ -27,8 +27,11 @@ export function mockApi(routes) {
     let handler = routes[key];
     if (handler === undefined) handler = { status: 404, body: { error: 'not_found' } };
     if (typeof handler === 'function') handler = handler({ body });
-    const { status = 200, body: payload = handler } = handler?.status ? handler : { body: handler };
-    return { ok: status >= 200 && status < 300, status, json: async () => payload };
+    // An HTTP-style envelope is { status: <number>, body }. A plain payload may itself have a "status" field
+    // (a trip has status: "planning"), so only a NUMERIC status counts as an envelope.
+    const { status = 200, body: payload = handler } = typeof handler?.status === 'number' ? handler : { body: handler };
+    // Clone like a real JSON round-trip so screens can never share (or mutate) a test's fixture objects.
+    return { ok: status >= 200 && status < 300, status, json: async () => structuredClone(payload) };
   };
   return calls;
 }
