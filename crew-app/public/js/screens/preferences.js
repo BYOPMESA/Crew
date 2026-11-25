@@ -94,7 +94,7 @@ export async function preferencesScreen(me, { params }) {
             });
             await api('PUT', `/trips/${params.id}/budget`, { amount_rupees: state.budget });
           });
-          navigate(isOrganiser ? `/trips/${params.id}/basics` : `/trips/${params.id}`);
+          navigate(isOrganiser ? `/trips/${params.id}/basics` : `/trips/${params.id}/waiting`);
         } catch (error) {
           err.show(error.message);
         }

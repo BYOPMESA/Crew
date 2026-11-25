@@ -5,6 +5,7 @@ import { loginScreen, signupScreen } from './screens/auth.js';
 import { homeScreen } from './screens/home.js';
 import { inviteScreen } from './screens/invite.js';
 import { joinScreen } from './screens/join.js';
+import { waitingScreen } from './screens/waiting.js';
 import { welcomeScreen } from './screens/welcome.js';
 import { preferencesScreen } from './screens/preferences.js';
 import { profileScreen } from './screens/profile.js';
@@ -38,6 +39,7 @@ route('/trips/:id/preferences', protectedRoute(preferencesScreen));
 route('/trips/:id/basics', protectedRoute(basicsScreen));
 route('/trips/:id/invite', protectedRoute(inviteScreen));
 route('/trips/:id/welcome', protectedRoute(welcomeScreen));
+route('/trips/:id/waiting', protectedRoute(waitingScreen));
 // Public: the invite landing works logged out; the screen itself decides what to offer.
 route('/join/:token', joinScreen);
 

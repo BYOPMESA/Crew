@@ -1,6 +1,7 @@
 import { api, getMe } from '../lib/api.js';
 import { h } from '../lib/dom.js';
 import { dateRange } from '../lib/format.js';
+import { clearPendingInvite, rememberPendingInvite } from '../lib/pending.js';
 import { navigate } from '../lib/router.js';
 import { busy, errorBox, icon, link, logo, screen } from '../lib/ui.js';
 
@@ -8,10 +9,21 @@ import { busy, errorBox, icon, link, logo, screen } from '../lib/ui.js';
 export async function joinScreen({ params }) {
   document.title = "You're invited · crew.com";
   const token = params.token;
-  const [info, me] = await Promise.all([api('GET', `/invitations/${token}`), getMe()]);
   const here = `/join/${token}`;
 
-  if (info.state !== 'valid') return deadEnd(info, me);
+  let info;
+  let me;
+  try {
+    [info, me] = await Promise.all([api('GET', `/invitations/${token}`), getMe()]);
+  } catch (error) {
+    if (error.status === 503) return notReady();
+    throw error;
+  }
+
+  if (info.state !== 'valid') {
+    clearPendingInvite();
+    return deadEnd(info, me);
+  }
 
   const err = errorBox();
   const { trip } = info;
@@ -19,21 +31,35 @@ export async function joinScreen({ params }) {
   const meta = [dates, `${info.crew_in} in`].filter(Boolean).join(' · ');
 
   let cta;
-  if (me) {
+  let footer;
+  if (me && info.member) {
+    // Already in this trip: no join, no consumed link, just a way in.
+    clearPendingInvite();
+    cta = link(`/trips/${info.trip_id}`, { class: 'cta' }, 'Open trip ', icon('arrow'));
+    footer = h('div', { class: 'small center' }, "You're already in this trip.");
+  } else if (me) {
     cta = h('button', { class: 'cta', type: 'button' }, 'Join the trip ', icon('arrow'));
     cta.addEventListener('click', async () => {
       err.clear();
       try {
         const res = await busy(cta, 'Joining…', () => api('POST', `/invitations/${token}/accept`));
+        clearPendingInvite();
         // replace: keep the one-time link out of the back-button history
         navigate(res.already_member ? `/trips/${res.trip_id}` : `/trips/${res.trip_id}/welcome`, { replace: true });
       } catch (error) {
         err.show(error.message);
-        if (error.status === 410) cta.disabled = true;
+        if (error.status === 410) {
+          clearPendingInvite();
+          cta.disabled = true;
+        }
       }
     });
+    footer = h('div', { class: 'small center' }, 'Joining as ', h('b', {}, me.display_name));
   } else {
+    // Logged out: remember the link so it is not lost if sign-up needs an email confirmation first.
+    rememberPendingInvite(token);
     cta = link(`/signup?next=${encodeURIComponent(here)}`, { class: 'cta' }, 'Join the trip ', icon('arrow'));
+    footer = h('div', { class: 'center', style: 'font-size:12.5px;color:var(--ink2)' }, 'Already have an account? ', link(`/login?next=${encodeURIComponent(here)}`, { class: 'link' }, 'Log in instead'));
   }
 
   return screen(
@@ -53,8 +79,7 @@ export async function joinScreen({ params }) {
     err.node,
     h('div', { class: 'grow' }),
     cta,
-    !me && h('div', { class: 'center', style: 'font-size:12.5px;color:var(--ink2)' }, 'Already have an account? ', link(`/login?next=${encodeURIComponent(here)}`, { class: 'link' }, 'Log in instead')),
-    me && h('div', { class: 'small center' }, 'Joining as ', h('b', {}, me.display_name)),
+    footer,
   );
 }
 
@@ -66,5 +91,15 @@ function deadEnd(info, me) {
     h('div', { class: 'note' }, 'Ask the person who invited you to send a fresh link. Each link works once and lasts 7 days.'),
     h('div', { class: 'grow' }),
     link('/', { class: 'cta' }, me ? 'Go to my trips' : 'Go to crew.com'),
+  );
+}
+
+/** The server has no service-role key yet (503): say so plainly instead of a generic error. */
+function notReady() {
+  return screen(
+    logo(),
+    h('div', { style: 'margin-top:24px' }, h('h1', {}, 'Invites are ', h('em', {}, 'not ready yet.')), h('p', { style: 'margin-top:8px' }, 'This crew.com server is still being set up, so invite links cannot be opened right now. Please try again a little later.')),
+    h('div', { class: 'grow' }),
+    link('/', { class: 'cta' }, 'Go to crew.com'),
   );
 }
