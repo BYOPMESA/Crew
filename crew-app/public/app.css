@@ -69,10 +69,25 @@ input[type="range"].range { -webkit-appearance: none; appearance: none; width: 1
 .strip.plain { background: var(--grad); display: grid; place-items: center; color: rgba(255, 255, 255, .85); }
 .nav { margin-top: auto; position: sticky; bottom: max(8px, env(safe-area-inset-bottom)); }
 .nav a { text-decoration: none; }
-.stat-grid { display: flex; gap: 8px; }
-.stat-grid .m { flex: 1; background: #fff; border-radius: 14px; box-shadow: var(--sh-card); padding: 10px; text-align: center; }
-.stat-grid .m b { display: block; font-size: 15px; font-weight: 800; }
-.stat-grid .m span { font-size: 10px; color: var(--mut); }
+/* trip dashboard (A12): stat tiles come from style.css (.stats .m); these only make them behave on narrow screens */
+.stats .m { min-width: 0; overflow-wrap: anywhere; }
+/* two-letter initials (same-name members, #38) need a little more room than the mockup's single letters */
+.stats .av { flex: none; width: 22px; height: 22px; margin-left: -5px; font-size: 8px; letter-spacing: -.2px; }
+.stats .av:first-child { margin-left: 0; }
+
+/* "Up next" rows: the .next row itself is the mockup's; additions are for real, variable-length text */
+.next-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.next { align-items: center; min-width: 0; }
+.next .ico-sq svg { width: 16px; height: 16px; }
+.next .nx { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.next .nx b { font-weight: 700; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+.next .nx small { font-weight: 500; font-size: 10.5px; line-height: 1.35; color: var(--mut); overflow-wrap: anywhere; }
+.next.primary { border: 1.5px solid var(--teal); background: var(--tint); }
+.next.primary .ico-sq { background: #fff; }
+.next.info { background: transparent; box-shadow: none; border: 1.5px dashed var(--line); }
+.next.info .ico-sq { background: var(--surface2); color: var(--mut); }
+a.next { text-decoration: none; transition: transform .12s; }
+a.next:hover { transform: translateY(-1px); }
 .hero.plain { background: var(--grad); }
 .hero.plain::after { background: linear-gradient(180deg, rgba(15, 46, 51, 0) 30%, rgba(15, 46, 51, .35)); }
 .crewrow .s.done { color: var(--green); font-weight: 600; }

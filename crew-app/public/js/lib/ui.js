@@ -9,6 +9,13 @@ const ICONS = {
   pin: `<svg width="26" height="26" viewBox="0 0 24 24" ${stroke}><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>`,
   sparkle: `<svg width="12" height="12" viewBox="0 0 24 24" fill="#8A6400"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z"/></svg>`,
   check: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`,
+  // Up next row icons (A12 mockup uses 16px glyphs in a tinted square)
+  clock: `<svg width="16" height="16" viewBox="0 0 24 24" ${stroke}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  users: `<svg width="16" height="16" viewBox="0 0 24 24" ${stroke}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  sliders: `<svg width="16" height="16" viewBox="0 0 24 24" ${stroke}><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>`,
+  calendar: `<svg width="16" height="16" viewBox="0 0 24 24" ${stroke}><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`,
+  vote: `<svg width="16" height="16" viewBox="0 0 24 24" ${stroke}><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h9"/></svg>`,
+  chev: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A3B8B2" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>`,
 };
 // Icons are decorative: the surrounding text or aria-label carries the meaning.
 export const icon = (name) => {
