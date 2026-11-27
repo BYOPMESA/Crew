@@ -3,15 +3,30 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
-const spa = new RegExp(`^${vercel.rewrites[0].source}$`);
+const rule = (dest) => vercel.rewrites.filter((r) => r.destination === dest).map((r) => new RegExp(`^${r.source}$`));
+const toShell = rule('/index.html');
+const toFunction = rule('/api');
+const firstMatch = (p) => vercel.rewrites.find((r) => new RegExp(`^${r.source}$`).test(p))?.destination;
 
 test('vercel.json: client pages fall back to the app shell; API and health go to the function', () => {
-  assert.equal(vercel.rewrites.length, 1);
-  assert.equal(vercel.rewrites[0].destination, '/index.html');
+  assert.equal(toShell.length, 1);
   for (const p of ['/login', '/signup', '/profile', '/trips/abc', '/trips/abc/invite', '/join/AbC_123-token'])
-    assert.ok(spa.test(p), `${p} should serve the app shell`);
+    assert.equal(firstMatch(p), '/index.html', `${p} should serve the app shell`);
   for (const p of ['/api/me', '/api/auth/login', '/api/invitations/abc', '/healthz'])
-    assert.ok(!spa.test(p), `${p} must reach the Express function`);
+    assert.equal(firstMatch(p), '/api', `${p} must reach the function`);
+  assert.ok(toFunction.length >= 2);
+});
+
+test('api/index.js (the Vercel function) is the same Express app as the root entry', async () => {
+  Object.assign(process.env, {
+    SUPABASE_URL: 'https://example-ref.supabase.co',
+    SUPABASE_ANON_KEY: 'sb_publishable_test',
+    CREW_PUBLIC_URL: 'https://crew-demo.vercel.app',
+    COOKIE_SECURE: '1',
+  });
+  const root = await import('../index.js');
+  const fn = await import('../api/index.js');
+  assert.equal(fn.default, root.default);
 });
 
 test('root entry exports the Express app without listening, and its headers match vercel.json', async () => {
